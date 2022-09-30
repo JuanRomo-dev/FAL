@@ -1,11 +1,10 @@
-// Nombre del alumno .....
-// Usuario del Juez ......
-
+// Nombre del alumno Juan Romo Iribarren Carlos Gómez López
+// Usuario del Juez F59                  F33   
 
 #include <iostream>
 #include <iomanip>
 #include <fstream>
-
+using namespace std;
 
 // función que resuelve el problema
 TipoSolucion resolver(TipoDatos datos) {
