@@ -1,11 +1,11 @@
-// Nombre del alumno .....
-// Usuario del Juez ......
+// Nombre del alumno Juan Romo Iribarren
+// Usuario del Juez F59
 
 
 #include <iostream>
 #include <iomanip>
 #include <fstream>
-
+using namespace std;
 
 
 // función que resuelve el problema
