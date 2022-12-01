@@ -17,20 +17,29 @@ int comprobarDDesc(int k, int i) {
     return r;
 }
 
-bool esCompletable (vector<int>& sol, int n, vector<bool>& filas, vector<bool>& diag_asc, vector<bool>& diag_desc, int k) {
-    return (k < n - 1 && !filas[k] && !diag_asc[k] && !diag_desc[k]);
+bool noAtaca(vector<int> v, int k, vector<bool> const& filas, vector<bool> const& diag_asc, vector<bool> const& diag_desc) {
+    bool b;
+
+    b = !filas[v[k]] && !diag_asc[comprobarDAsc(k, v[k])] && !diag_desc[comprobarDDesc(k, v[k])];
+
+    return b;
 }
 
-bool esSolucion (vector<int>& sol, int n, vector<bool>& filas, vector<bool>& diag_asc, vector<bool>& diag_desc, int k) {
-    return (k == n - 1 && !filas[k] && !diag_asc[k] && !diag_desc[k]);
+bool esCompletable(vector<int>& sol, int n, vector<bool>& filas, vector<bool>& diag_asc, vector<bool>& diag_desc, int k) {
+    return (k < n - 1 && noAtaca(sol, k, filas, diag_asc, diag_desc));
+}
+
+bool esSolucion(vector<int>& sol, int n, vector<bool>& filas, vector<bool>& diag_asc, vector<bool>& diag_desc, int k) {
+    return (k == n - 1) && noAtaca(sol, k, filas, diag_asc, diag_desc);
 }
 
 // función que resuelve el problema. Los vectores filas, diag_asc y diag_desc sirven para marcar si esa fila o diagonales ya están ocupadas por una reina.
-int nReinas(vector<int>& sol, int n, vector<bool>& filas, vector<bool>& diag_asc, vector<bool>& diag_desc, int k) {
+void
+ nReinas(vector<int>& sol, int n, vector<bool>& filas, vector<bool>& diag_asc, vector<bool>& diag_desc, int k) {
     for (int i = 0; i < n; i++) {
         sol[k] = i;
         if (esSolucion(sol, n, filas, diag_asc, diag_desc, k)) {
-            return sol.size();
+            cout << k;
         }
         else if (esCompletable(sol, n, filas, diag_asc, diag_desc, k)) {
             filas[i] = true;
@@ -52,10 +61,10 @@ void resuelveCaso() {
 
     cin >> n;           // Número de reinas a colocar en el tablero.
 
-    vector<int> sol(n);
+    vector<int> sol(2*n);
     vector<bool> filas(n), diagonal1(n), diagonal2(n);
     // escribir sol
-    cout << nReinas(sol, n, filas, diagonal1, diagonal2, 0) << '\n';
+    nReinas(sol, n, filas, diagonal1, diagonal2, 0);
 }
 
 int main() {
