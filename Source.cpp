@@ -8,41 +8,76 @@
 using namespace std;
 
 // función que resuelve el problema
-int nReinasTorres(int t, int r, int k, int T, int R, int nFilsCols, vector<bool>& filas, vector<bool>& diagAsc, vector<bool>& diagDesc, vector<int> const& rotas) {
-    if (k == 0) {                     // Caso base
-        return 1;
-    }
-    else {
-        int formasPosibles = 0;                 // Para guardar el número de formas posibles de colocar las reinas y las torres.
-        for (int i = 0; i < nFilsCols; i++) {   // Recorremos las fichas a colocar (nFilsCols es t + r).
-            //Primero colocamos una reina:
-            if (r < R) {                        // Mientras haya reinas por colocar:
-                if (!filas[i] && !diagAsc[i + nFilsCols - k] && !diagDesc[2 * nFilsCols - k - i - 1] && rotas[i] == -1) {       // Se puede colocar (Es Solucion)
-                    filas[i] = true;                                                                                            // Marcaje de fila y diagonales.                
-                    diagAsc[i + nFilsCols - k] = true;
-                    diagDesc[2 * nFilsCols - k - i - 1] = true;
-                    formasPosibles += nReinasTorres(t, r, k - 1, T, R, nFilsCols, filas, diagAsc, diagDesc, rotas);             // Llamada recursiva.
-                    filas[i] = false;                                                                                            // Desmarcamos tras llamada recursiva.              
-                    diagAsc[i + nFilsCols - k] = false;
-                    diagDesc[2 * nFilsCols - k - i - 1] = false;
-                }
+
+bool esValido(int rotas[9], int r[9], int t[9], int nTorres, int nReinas, char tipoFicha) {
+    int nuevo = nTorres + nReinas - 1;
+    int tam = nuevo + 1;
+
+    if (tipoFicha == 'R') {                     // Comprobamos si la nueva reina se puede colocar.
+        for (int i = 0; i < tam - 1; i++) {
+            if (rotas[i] == r[nuevo]) {         // Si no coincide con una casilla rota
+                return false;
             }
-            // Ahora colocamos una torre:
-            if (t < T) {                        // Mientras haya torres por colocar:
-                if (!filas[i] && diagAsc[i + nFilsCols - k] && diagDesc[2 * nFilsCols - k - i - 1] && rotas[i] == -1) {       // Se puede colocar (Es Solucion)
-                    filas[i] = true;                                                                                            // Marcaje de fila y diagonales.                
-                    diagAsc[i + nFilsCols - k] = true;
-                    diagDesc[2 * nFilsCols - k - i - 1] = true;
-                    formasPosibles += nReinasTorres(t, r, k - 1, T, R, nFilsCols, filas, diagAsc, diagDesc, rotas);             // Llamada recursiva.
-                    filas[i] = false;                                                                                            // Desmarcamos tras llamada recursiva.              
-                    diagAsc[i + nFilsCols - k] = false;
-                    diagDesc[2 * nFilsCols - k - i - 1] = false;
+            if (r[i] != -1) {                   // Si esa reina ha sido colocada
+                if (r[i] == r[nuevo]) {         // Si hemos llegado al último
+                    return false;
+                }
+                if (abs(r[nuevo] - r[i]) == abs(nuevo - i)) {  // Comprobamos las diagonales.
+                    return false;
+                }
+                if (abs(r[nuevo] - t[i]) == abs(nuevo - i)) {   // Comprobamos las digonales con torres.
+                    return false;
+                }
+                if (t[i] == r[nuevo]) {     // Si se quiere colocar en un sitio donde hay una torre
+                    return false;
                 }
             }
         }
-
-        return formasPosibles;
     }
+    if (tipoFicha == 'T') {                // Comprobamos si la nueva torre se puede colocar.
+        for (int i = 0; i < tam; i++) {
+            if (rotas[i] == t[nuevo]) {         // Si no coincide con una casilla rota
+                return false;
+            }
+            if (t[i] != -1) {                   // Si esa reina ha sido colocada
+                if (r[i] == t[nuevo]) {         // Si hemos llegado al último
+                    return false;
+                }
+                if (abs(t[nuevo] - r[i]) == abs(nuevo - i)) {  // Comprobamos las diagonales.
+                    return false;
+                }
+                if (t[i] == t[nuevo]) {     // Si se quiere colocar en un sitio donde hay una torre
+                    return false;
+                }
+            }
+        }
+    }
+    return true;
+}
+
+int nReinasTorres(int r[9], int t[9], int rotas[9], int nReinas, int nTorres, int maxR, int maxT, int nFilsCols, int maneras) {
+    if (nReinas < maxR) {                       // Primero colocamos todas las reinas.
+        for (int i = 0; i < nFilsCols; i++) {
+            r[nReinas + nTorres] = i;
+            if (esValido(rotas, r, t, nTorres, nReinas + 1, 'R')) {
+                maneras++;
+                nReinasTorres(r, t, rotas, nReinas + 1, nTorres, maxR, maxT, nFilsCols, maneras);
+            }
+        }
+        r[nTorres + nReinas] = -1;
+    }
+    if (nTorres < maxT) {
+        for (int i = 0; i < nFilsCols; i++) {
+            r[nReinas + nTorres] = i;
+            if (esValido(rotas, r, t, nTorres + 1, nReinas, 'T')) {
+                maneras++;
+                nReinasTorres(r, t, rotas, nReinas, nTorres + 1, maxR, maxT, nFilsCols, maneras);
+            }
+        }
+        t[nTorres + nReinas] = -1;      // Si no se ha encontrado solución
+    }
+
+    return maneras;
 }
 
 // Resuelve un caso de prueba, leyendo de la entrada la
@@ -57,22 +92,30 @@ bool resuelveCaso() {
 
     int nFilsCols = T + R;                              // El número de filas y columnas es t + r.
     int nCasillasRotas;                                 // Número de casillas rotas en las que no se puede colocar ficha alguna.
+    cin >> nCasillasRotas;  
+
+    int r[9];
+    int t[9];
+    int rotas[9];                                       // Para marcar que casillas estan rotas, tal que rotas[col] = fila nos indica que esa casilla está rota y por tanto no se pueden colocar
+                                                        // fichas en ella.
     vector<bool> filas(nFilsCols, false);               // Para marcar que filas están ocupadas
     vector<bool> diagAsc(2 * nFilsCols - 1, false);     // Para marcar que diagonales ascendentes están ocupadas.
-    vector<bool> diagDesc(2 * nFilsCols - 1, false);    // Para marcar que diagonales decendentes están ocupadas.
-    vector<int> rotas(nFilsCols, -1);                    // Para marcar que casillas estan rotas, tal que rotas[col] = fila nos indica que esa casilla está rota y por tanto no se pueden colocar
-                                                        // fichas en ella.
-    cin >> nCasillasRotas;                  
+    vector<bool> diagDesc(2 * nFilsCols - 1, false);    // Para marcar que diagonales decendentes están ocupadas.         
+
+    for (int i = 0; i < nFilsCols; i++) {               // Inicializamos a -1 para evitar valores basura.
+        r[i] = -1;
+        t[i] = -1;
+        rotas[i] = -2;
+    }
+
     int fila, col;                                      // Fila y columna donde está la casilla rota.              
     for (int i = 0; i < nCasillasRotas; i++) {
         cin >> fila >> col;
-        fila -= 1;                                      // Les restamos 1 para que empiecen en 0.
-        col -= 1;
         rotas[col] = fila;
     }
 
     // escribir sol
-    cout << nReinasTorres(0, 0, nFilsCols, T, R, nFilsCols, filas, diagAsc, diagDesc, rotas) << '\n';
+    cout << nReinasTorres(r, t, rotas, 0, 0, R, T, nFilsCols, 0) << '\n';
 
     return true;
 }
