@@ -1,4 +1,4 @@
-﻿// Nombre del alumno Juan Romo Iribarren
+// Nombre del alumno Juan Romo Iribarren
 // Usuario del Juez F59
 
 #include <iostream>
@@ -7,137 +7,94 @@
 #include <vector>
 using namespace std;
 
-// función que resuelve el problema
+using tMatriz = vector<vector<bool>>;
 
-bool esValido(int rotas[9], int r[9], int t[9], int nTorres, int nReinas, char tipoFicha) {
-    int nuevo = nTorres + nReinas - 1;
-    int tam = nuevo + 1;
+int reinasTorres(int N, int T, int K, int suma, tMatriz const& matriz, vector<bool>& cols,
+	vector<bool>& diagasc, vector<bool>& diagdesc, vector<bool>& diagtorresasc, vector<bool>& diagtorresdesc) {
+	if (suma == 0) {				// Caso base, si no hay torres ni reinas que colocar.
+		return 1;
+	}
+	else {
+		int formas = 0;
 
-    if (tipoFicha == 'R') {                     // Comprobamos si la nueva reina se puede colocar.
-        for (int i = 0; i < tam - 1; i++) {
-            if (rotas[i] == r[nuevo]) {         // Si no coincide con una casilla rota
-                return false;
-            }
-            if (r[i] != -1) {                   // Si esa reina ha sido colocada
-                if (r[i] == r[nuevo]) {         // Si hemos llegado al último
-                    return false;
-                }
-                if (abs(r[nuevo] - r[i]) == abs(nuevo - i)) {  // Comprobamos las diagonales.
-                    return false;
-                }
-                if (abs(r[nuevo] - t[i]) == abs(nuevo - i)) {   // Comprobamos las digonales con torres.
-                    return false;
-                }
-                if (t[i] == r[nuevo]) {     // Si se quiere colocar en un sitio donde hay una torre
-                    return false;
-                }
-            }
-        }
-    }
-    if (tipoFicha == 'T') {                // Comprobamos si la nueva torre se puede colocar.
-        for (int i = 0; i < tam; i++) {
-            if (rotas[i] == t[nuevo]) {         // Si no coincide con una casilla rota
-                return false;
-            }
-            if (t[i] != -1) {                   // Si esa reina ha sido colocada
-                if (r[i] == t[nuevo]) {         // Si hemos llegado al último
-                    return false;
-                }
-                if (abs(t[nuevo] - r[i]) == abs(nuevo - i)) {  // Comprobamos las diagonales.
-                    return false;
-                }
-                if (t[i] == t[nuevo]) {     // Si se quiere colocar en un sitio donde hay una torre
-                    return false;
-                }
-            }
-        }
-    }
-    return true;
+		for (int i = 0; i < N; ++i) {																				// Recorremos el n�mero de fichas a colocar.
+			if (!cols[i] && !diagasc[i + N - suma] && !diagdesc[2 * N - suma - i - 1] && matriz[N - suma][i] &&		// Si en esa fila a�n no se ha colocado ficha, ni en las diagonales, entra en el rango de la matriz
+				!diagtorresasc[i + N - suma] && !diagtorresdesc[2 * N - suma - i - 1] && K > 0) {				// Comprobamos si en las diagonales hay una torre (estamos colocando reinas).
+				cols[i] = true;
+				diagasc[i + N - suma] = true;		// Marcajes.
+				diagdesc[2 * N - suma - i - 1] = true;
+				formas += reinasTorres(N, T, K - 1, suma - 1, matriz, cols, diagasc, diagdesc, diagtorresasc, diagtorresdesc);		// Llamadas recursivas
+				cols[i] = false;
+				diagasc[i + N - suma] = false;					// Desmarcaje
+				diagdesc[2 * N - suma - i - 1] = false;
+			}
+
+			if (!cols[i] && !diagasc[i + N - suma] && !diagdesc[2 * N - suma - i - 1] && matriz[N - suma][i] && T > 0) {		// Colocamos torres.
+				cols[i] = true;
+				bool cambiadoAsc = false, cambiadoDesc = false;
+				if (!diagtorresasc[i + N - suma]) {
+					diagtorresasc[i + N - suma] = true;		// Marcamos las diagonales si se ha colocado una torre.
+					cambiadoAsc = true;
+				}
+
+				if (!diagtorresdesc[2 * N - suma - i - 1]) {
+					diagtorresdesc[2 * N - suma - i - 1] = true;
+					cambiadoDesc = true;
+				}
+
+				formas += reinasTorres(N, T - 1, K, suma - 1, matriz, cols, diagasc, diagdesc, diagtorresasc, diagtorresdesc);		// Llamada recursiva.
+				cols[i] = false;
+				if (cambiadoAsc) diagtorresasc[i + N - suma] = false;
+				if (cambiadoDesc) diagtorresdesc[2 * N - suma - i - 1] = false;
+			}
+		}
+
+		return formas;
+	}
 }
 
-int nReinasTorres(int r[9], int t[9], int rotas[9], int nReinas, int nTorres, int maxR, int maxT, int nFilsCols, int maneras) {
-    if (nReinas < maxR) {                       // Primero colocamos todas las reinas.
-        for (int i = 0; i < nFilsCols; i++) {
-            r[nReinas + nTorres] = i;
-            if (esValido(rotas, r, t, nTorres, nReinas + 1, 'R')) {
-                maneras++;
-                nReinasTorres(r, t, rotas, nReinas + 1, nTorres, maxR, maxT, nFilsCols, maneras);
-            }
-        }
-        r[nTorres + nReinas] = -1;
-    }
-    if (nTorres < maxT) {
-        for (int i = 0; i < nFilsCols; i++) {
-            r[nReinas + nTorres] = i;
-            if (esValido(rotas, r, t, nTorres + 1, nReinas, 'T')) {
-                maneras++;
-                nReinasTorres(r, t, rotas, nReinas, nTorres + 1, maxR, maxT, nFilsCols, maneras);
-            }
-        }
-        t[nTorres + nReinas] = -1;      // Si no se ha encontrado solución
-    }
-
-    return maneras;
-}
-
-// Resuelve un caso de prueba, leyendo de la entrada la
-// configuración, y escribiendo la respuesta
 bool resuelveCaso() {
-    // leer los datos de la entrada
-    int T, R;               // t es el número de torres y r es el número de reinas.
+	int T, R, N;
+	cin >> T >> R >> N;			// N�mero de torres, reinas y casillas que no se pueden usar.
 
-    cin >> T >> R;
-    if (!std::cin)
-        return false;
+	if (!std::cin) return false;
 
-    int nFilsCols = T + R;                              // El número de filas y columnas es t + r.
-    int nCasillasRotas;                                 // Número de casillas rotas en las que no se puede colocar ficha alguna.
-    cin >> nCasillasRotas;  
+	tMatriz matriz(T + R, std::vector<bool>(T + R, true));		// Matriz con filas y columnas tama�o T + R
+	int x, y;													// Posici�n de la casilla rota
+	for (int i = 0; i < N; ++i) {
+		std::cin >> x >> y;
+		matriz[x - 1][y - 1] = false;
+	}
 
-    int r[9];
-    int t[9];
-    int rotas[9];                                       // Para marcar que casillas estan rotas, tal que rotas[col] = fila nos indica que esa casilla está rota y por tanto no se pueden colocar
-                                                        // fichas en ella.
-    vector<bool> filas(nFilsCols, false);               // Para marcar que filas están ocupadas
-    vector<bool> diagAsc(2 * nFilsCols - 1, false);     // Para marcar que diagonales ascendentes están ocupadas.
-    vector<bool> diagDesc(2 * nFilsCols - 1, false);    // Para marcar que diagonales decendentes están ocupadas.         
+	vector<bool> cols(T + R);								// Para marcar las casillas donde ya se ha colocado una ficha.
+	vector<bool> diagasc(2 * (T + R) - 1);					// Para marcar las diagonales ascendentes de las reinas.
+	vector<bool> diagdesc(2 * (T + R) - 1);					// Para marcar las diagonales descendentes de las reinas.
+	vector<bool> diagtorresasc(2 * (T + R) - 1);			// Para marcar las diagonales ascendentes de las torres.
+	vector<bool> diagtorresdesc(2 * (T + R) - 1);			// Para marcar las diagonales descendentes de las torres.
 
-    for (int i = 0; i < nFilsCols; i++) {               // Inicializamos a -1 para evitar valores basura.
-        r[i] = -1;
-        t[i] = -1;
-        rotas[i] = -2;
-    }
+	cout << reinasTorres(T + R, T, R, T + R, matriz, cols, diagasc, diagdesc, diagtorresasc, diagtorresdesc) << '\n';
 
-    int fila, col;                                      // Fila y columna donde está la casilla rota.              
-    for (int i = 0; i < nCasillasRotas; i++) {
-        cin >> fila >> col;
-        rotas[col] = fila;
-    }
-
-    // escribir sol
-    cout << nReinasTorres(r, t, rotas, 0, 0, R, T, nFilsCols, 0) << '\n';
-
-    return true;
+	return true;
 }
 
 int main() {
-    // Para la entrada por fichero.
-    // Comentar para acepta el reto
+	// Para la entrada por fichero.
+	// Comentar para acepta el reto
 #ifndef DOMJUDGE
-    std::ifstream in("datos.txt");
-    auto cinbuf = std::cin.rdbuf(in.rdbuf()); //save old buf and redirect std::cin to casos.txt
+	std::ifstream in("datos.txt");
+	auto cinbuf = std::cin.rdbuf(in.rdbuf()); //save old buf and redirect std::cin to casos.txt
 #endif 
 
 
-    while (resuelveCaso())
-        ;
+	while (resuelveCaso())
+		;
 
 
-    // Para restablecer entrada. Comentar para acepta el reto
+	// Para restablecer entrada. Comentar para acepta el reto
 #ifndef DOMJUDGE // para dejar todo como estaba al principio
-    std::cin.rdbuf(cinbuf);
-    system("PAUSE");
+	std::cin.rdbuf(cinbuf);
+	system("PAUSE");
 #endif
 
-    return 0;
+	return 0;
 }
