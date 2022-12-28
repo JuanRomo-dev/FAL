@@ -13,7 +13,19 @@ using namespace std;
         valor pulsacionTeclas[i][j] nos da el valor de la recompensa  (si pulsacionTeclas[i][j] >= 0) o del castigo (si pulsacionTeclas[i][j] < 0). Además se establece que las teclas pulsadas
         deben ser tantas como la longitud de la secuencia pedida m, maximizando las recompensas obtenidas, y sin que el número de castigos no sea superior al valor C. En la función, se tienen
         los siguientes parámetros: pulsacionTeclas -> es el vector tipo matriz que guarda la información, k -> para llevar la cuenta de que tecla se va a pulsar, sol -> Para guardar la 
-        solucion que en este caso es la máxima recompensa encontrada, n -> número de teclas, m -> longitud de la secuencia, c -> valor del castigo que no debe superarse, 
+        solucion que en este caso es la máxima recompensa encontrada, n -> número de teclas, m -> longitud de la secuencia, c -> valor del castigo que no debe superarse, recompensa -> lleva
+        la cuenta del total de la recompensa que llevamos, castigo -> lleva el total de castigos que llevamos.
+        Vamos recorriendo las filas en un bucle. Asignamos la tecla correspondiente a la secuencia. Comprobamos que no sea la primera tecla, ya que esta al no tener una anterior no hay que
+        tenerla en cuenta. Si no es la primera, miramos si el valor de la tecla que hemos pulsado es una recompensa o un castigo. Dependiendo del valor se asigna uno u otro. Luego se ve si se 
+        puede completar la solución por la restricción de no superar el número de castigos C. Si hemos llegado a la última de la secuencia, si vemos que ese valor es el mejor encontrado, se 
+        actualiza. En caso contrario, se llama recursivamente para seguir completando la solución. Finalmente desmarcamos los valores de recompensa o castigo según lo que corresponda.
+
+        Los marcadores establecidos son recompensa y castigo, explicados anteriormente.
+
+        ESPACIO DE SOLUCIONES: Es un vector de tamaño m, donde m es la longitud de la secuencia pedida, y en el que cada componente de solucion[i] pertenece a (0, ..., m - 1).
+        TAMAÑO DEL ÁRBOL DE EXPLORACIÓN: Es un árbol de profundidad m (la longitud de la secuencia) y anchura de n (las teclas), por lo que el tamaño es exponencial m^n.
+        RESTRICCIONES EXPLÍCITAS: Cada componente de la solución pertene a (0, ..., n - 1), donde n el número de teclas.
+        RESTRICCIONES IMPLÍCITAS: El número de castigos dados no debe ser superior a los del valor C.
 
 */
 
@@ -24,7 +36,7 @@ bool esValida(int const& c, int const& castigo) {        // Comprueba si supera 
 // función que resuelve el problema
 void resolver(vector<vector<int>> const& pulsacionTeclas, int k, int& sol, int const& n, int const& m, int const& c, vector<int>& solucion, vector<int>& solucionMejor, 
               int recompensa, int castigo) {
-    for (int i = 0; i < n; i++) {           // Recorremos la secuencia a cubrir por teclas pulsadas.
+    for (int i = 0; i < n; i++) {           // Recorremos las filas
         solucion[k] = i;                    // Se pulsa la tecla
         if (k > 0) {                        // La primera tecla puede ser cualquiera y no hay recompensa.
             if (pulsacionTeclas[solucion[k - 1]][i] >= 0) {     // Si se trata de una recompensa
