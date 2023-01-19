@@ -27,64 +27,47 @@ using namespace std;
         NO
 
         Recurrencia de la función:
-                    {  C1                   si n = 1
-        T(n)    =   {  C2                   si n = 2
-                    {  n*C3 + 2 * T(n/2)          si n > 2       Es 2*T(n/2) porque en cada llamada recursiva se realizan 2 llamadas recursivas con la mitad 
+                    {  C1                       si n <= 2
+        T(n)    =   {  
+                    {  2 * T(n/2) + c2          si n > 2       Es 2*T(n/2) porque en cada llamada recursiva se realizan 2 llamadas recursivas con la mitad 
                                                                  del vector, y es n * C3, porque para calcular las sumas recorremos el vector entero.
 
-        Coste de la solución: Por tanto el coste del algoritmo es O(n*log(n)), donde n es el número de elementos del vector.
+        Coste de la solución: Por tanto el coste del algoritmo en el caso peor es O(n), donde n es el número de elementos del vector.
 */                  
 
 // función que resuelve el problema
-bool resolver(vector<int> v, int ini, int fin) {
-    if (fin == 1) {
+bool resolver(vector<int> v, int ini, int fin, int& sumaParesIzda, int& prodImparesIzda, int& prodParesDcha, int& sumaImparesDcha) {
+    int n = fin - ini;
+    if (n == 1) {
+        if (v[0] % 2 == 0) {    // Si el elemento que nos queda es par
+            sumaParesIzda += v[0];
+        }
+        else {
+            prodImparesIzda *= v[0];
+        }
         return true;
     }
-    else if (fin == 2) {
-        int sumaParesIzda = 0;          
-        int productosImparesIzda = 1;
+    else if (n == 2) {
         if (v[0] % 2 == 0) {
             sumaParesIzda += v[0];
         }
         else {
-            productosImparesIzda *= v[0];
+            prodImparesIzda *= v[0];
         }
-        int productosParesDcha = 1;    
-        int sumaImparesDcha = 0; 
         if (v[1] % 2 == 0) {
-            productosParesDcha *= v[1];
+            prodParesDcha *= v[1];
         }
         else {
             sumaImparesDcha += v[1];
         }
-        return (sumaParesIzda + productosImparesIzda) <= (productosParesDcha + sumaImparesDcha);
+        return (sumaParesIzda + prodImparesIzda) <= (prodParesDcha + sumaImparesDcha);
     }
     else {
         int mitad = (ini + fin) / 2;    // Calculamos la mitad del vector
-        int sumaParesIzda = 0;          // Para calcular la suma de pares en la primera mitad.
-        int productosImparesIzda = 1;   // Para calcular el producto de impares de la primera mitad.
-        for (int i = 0; i < mitad; i++) {
-            if (v[i] % 2 == 0) {        // Si es par
-                sumaParesIzda += v[i];  // Se suma
-            }
-            else {                      // Si es impar se multiplica
-                productosImparesIzda *= v[i];
-            }
-        }
-        int productosParesDcha = 1;     // Para calcular el producto de los pares de segunda mitad.
-        int sumaImparesDcha = 0;        // Para calcular la suma de los impares de la segunda mitad.
-        for (int i = mitad; i < fin; i++) {
-            if (v[i] % 2 == 0) {        // Si es par se multiplica.
-                productosParesDcha *= v[i];
-            }
-            else {                      // Si es impar se suma.
-                sumaImparesDcha += v[i];
-            }
-        }
 
-        bool izq = resolver(v, ini, mitad);     // Para comprobar si una de las 2 mitades es extraña
-        bool der = resolver(v, mitad, fin - 1);
-        return ((sumaParesIzda + productosImparesIzda) <= (productosParesDcha + sumaImparesDcha) && (izq || der));
+        bool izq = resolver(v, ini, mitad, sumaParesIzda, prodImparesIzda, prodParesDcha, sumaImparesDcha); // Para comprobar si una de las 2 mitades es extraña
+        bool der = resolver(v, mitad + 1, fin, sumaParesIzda, prodImparesIzda, prodParesDcha, sumaImparesDcha);
+        return ((sumaParesIzda + prodImparesIzda) <= (prodParesDcha + sumaImparesDcha) && (izq || der));
     }
 }
 
@@ -101,8 +84,9 @@ void resuelveCaso() {
         cin >> v[i];
     }
 
+    int sumParesIzda = 0, prodImparesIzda = 1, prodParesDcha = 1, sumImparesDcha = 0;
     // escribir sol
-    if (resolver(v, 0, n)) {
+    if (resolver(v, 0, n, sumParesIzda, prodImparesIzda, prodParesDcha, sumImparesDcha)) {
         cout << "SI";
     }
     else {
